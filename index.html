@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="my">
 <head>
+  
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ကမ္မဋ္ဌာန်းတရားများ</title>
+    <title>COMBINE PRINT</title>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
 
@@ -1110,42 +1111,80 @@ function exportPDF() {
     let tocHTML = "";
     let headings = tempDiv.querySelectorAll('h2, h3');
     
+    // မာတိကာ တည်ဆောက်ခြင်းနှင့် စာမျက်နှာနံပါတ် သတ်မှတ်ရန် ID/Span ထည့်ခြင်း
     if (headings.length > 0) {
-        tocHTML = `<h2>မာတိကာ</h2><ul style="line-height: 2; padding-left: 30px; font-size: 16pt;">`;
-        headings.forEach(heading => {
+        tocHTML = `<h2>မာတိကာ</h2><ul class="toc-list">`;
+        headings.forEach((heading, index) => {
             let text = heading.innerText.trim();
             if (text && text.length > 1) {
-                tocHTML += `<li style="border-bottom: 1px dotted #ccc; margin-bottom: 5px;">${text}</li>`;
+                let id = heading.id ? heading.id : `single_heading_${index}`;
+                heading.id = id;
+                tocHTML += `<li><a href="#${id}">${text}</a><span class="toc-dots"></span><span class="toc-page-num" id="page_for_${id}">-</span></li>`;
             }
         });
         tocHTML += `</ul>`;
     }
 
+    let allHeadings = tempDiv.querySelectorAll('h2, h3, h4, h5, h6');
+    allHeadings.forEach(heading => {
+        let nextSibling = heading.nextElementSibling;
+        if (nextSibling && (nextSibling.tagName === 'P' || nextSibling.tagName === 'DIV' || nextSibling.tagName === 'UL')) {
+            let wrapper = document.createElement('div');
+            wrapper.setAttribute('style', 'page-break-inside: avoid !important; break-inside: avoid !important; margin-bottom: 10px;');
+            heading.parentNode.insertBefore(wrapper, heading);
+            wrapper.appendChild(heading);
+            wrapper.appendChild(nextSibling);
+        }
+    });
+
     let cleanContent = tempDiv.innerHTML;
 
-    // 🌟 မာတိကာအပြီး နောက်စာမျက်နှာမှ စတင်ရန်နှင့် ဒီဇိုင်းပိုင်း
     let printHTML = `
     <html>
     <head>
+        <meta charset="UTF-8">
         <title>${activeTitle}</title>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
             
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
-            h1, h2, h3, h4 { color: #000; text-align: center; }
+            h1, h2, h3, h4 { color: #000; text-align: center; margin-bottom: 5px !important; }
 
-            /* 💡 ခေါင်းစဉ်နှင့် အောက်က စာပိုဒ် စာမျက်နှာ မတူဘဲ တခြားစီ ကွဲမသွားအောင် တားမြစ်ခြင်း */
-            h1, h2, h3, h4, h5, h6 {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+            /* မာတိကာ ဒီဇိုင်းနှင့် စာမျက်နှာနံပါတ် နေရာချမှု */
+            .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
+            .toc-list li { 
+                margin-bottom: 8px; 
+                font-size: 16pt; 
+                display: flex; 
+                align-items: baseline;
+            }
+            .toc-list li a { 
+                text-decoration: none; 
+                color: black; 
+            }
+            .toc-dots {
+                flex-grow: 1;
+                border-bottom: 1px dotted #555;
+                margin: 0 8px;
+            }
+            .toc-page-num { 
+                font-weight: bold; 
+                font-size: 15pt;
             }
 
-            p, div, span, li, center { font-size: 17pt !important; line-height: 1.8 !important; color: #000 !important; }
-            p { text-align: justify; text-indent: 40px; }
+            h1 + *, h2 + *, h3 + *, h4 + * {
+                page-break-before: avoid !important;
+                break-before: avoid !important;
+            }
+
+            p, div, span, li, center { 
+                font-size: 17pt !important; 
+                line-height: 1.8 !important; 
+                color: #000 !important; 
+                orphans: 1; widows: 1; 
+            }
+            p { text-align: justify; text-indent: 40px; margin-top: 5px !important; }
             
-            /* စာပိုဒ်များကို စာမျက်နှာအလယ်မှာ မပြတ်သွားအောင် ထိန်းချုပ်ခြင်း */
             p, blockquote {
                 page-break-inside: auto !important;
                 break-inside: auto !important;
@@ -1153,10 +1192,10 @@ function exportPDF() {
 
             a { text-decoration: none; color: black; }
             
-            /* 🌟 စာမျက်နှာအသစ်မှ စတင်ရန် CSS */
             .page-break { page-break-before: always !important; break-before: page !important; }
             
             @page {
+                size: A4;
                 margin: 20mm 15mm 20mm 25mm;
                 margin-bottom: 2cm !important; 
                 @bottom-right {
@@ -1170,7 +1209,6 @@ function exportPDF() {
         <h1 style="margin-top: 20px;">${activeTitle}</h1>
         ${tocHTML}
         
-        <!-- 🌟 မာတိကာပါလာပါက ဤနေရာတွင် စာမျက်နှာ ဖြတ်ပေးမည် -->
         ${tocHTML !== "" ? '<div class="page-break"></div>' : ''}
         
         ${cleanContent}
@@ -1178,9 +1216,13 @@ function exportPDF() {
     </html>
     `;
 
+    // offsetTop တွက်ချက်နိုင်ရန် iframe အရွယ်အစား သတ်မှတ်ပေးခြင်း
     let printFrame = document.createElement('iframe');
-    printFrame.style.position = "absolute";
-    printFrame.style.top = "-10000px"; 
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "100%";
+    printFrame.style.bottom = "100%";
+    printFrame.style.width = "794px"; 
+    printFrame.style.height = "1123px";
     document.body.appendChild(printFrame);
 
     let docContext = printFrame.contentWindow.document;
@@ -1189,14 +1231,35 @@ function exportPDF() {
     docContext.close();
 
     printFrame.onload = function() {
-        printFrame.contentWindow.focus();
-        printFrame.contentWindow.print();
-        
-        setTimeout(() => { 
-            if(document.body.contains(printFrame)) {
-                document.body.removeChild(printFrame); 
+        // စာမျက်နှာ အမြင့်နှင့် ခေါင်းစဉ်များ၏ တည်နေရာကို တွက်ချက်ခြင်း
+        setTimeout(() => {
+            try {
+                let win = printFrame.contentWindow;
+                let doc = win.document;
+                let printablePageHeight = 980; 
+                
+                let targetHeadings = doc.querySelectorAll('h2[id], h3[id]');
+                targetHeadings.forEach(h => {
+                    let targetSpan = doc.getElementById('page_for_' + h.id);
+                    if (targetSpan) {
+                        let topPos = h.offsetTop;
+                        let pageNum = Math.floor(topPos / printablePageHeight) + 1;
+                        targetSpan.innerText = pageNum;
+                    }
+                });
+            } catch(e) {
+                console.error("Page calculation error: ", e);
             }
-        }, 5000);
+
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+            
+            setTimeout(() => { 
+                if(document.body.contains(printFrame)) {
+                    document.body.removeChild(printFrame); 
+                }
+            }, 5000);
+        }, 800);
     };
 }
 
@@ -1224,20 +1287,37 @@ async function printCombinedPDF() {
         }
     });
 
-    if (titles.length === 0) {
+    let totalChapters = titles.length;
+    if (totalChapters === 0) {
         alert("ဤစာမျက်နှာတွင် ပေါင်းထုတ်ရန် ခေါင်းစဉ်ခွဲများ မတွေ့ပါ။");
         return;
     }
 
+    let startNumStr = prompt(`စုစုပေါင်း အခန်း ( ${totalChapters} ) ခန်း ရှိပါသည်။\nမည်သည့်အခန်းမှ စတင်ထုတ်မည်နည်း။ (ဥပမာ - 1)`, "1");
+    if (startNumStr === null) return;
+    let startNum = parseInt(startNumStr);
+
+    let defaultEnd = Math.min(startNum + 19, totalChapters); 
+    let endNumStr = prompt(`မည်သည့်အခန်းအထိ ထုတ်မည်နည်း။ (ဥပမာ - ${defaultEnd})\n(မှတ်ချက်။ တစ်ခါထုတ်လျှင် အခန်း ၂၀ မှ ၂၅ ခန်းခန့်သာ အကောင်းဆုံးဖြစ်ပါသည်)`, defaultEnd);
+    if (endNumStr === null) return;
+    let endNum = parseInt(endNumStr);
+
+    if (isNaN(startNum) || isNaN(endNum) || startNum < 1 || endNum > totalChapters || startNum > endNum) {
+        alert("အခန်း နံပါတ်များ မှားယွင်းနေပါသည်။ ကျေးဇူးပြု၍ ပြန်လည်ရိုက်ထည့်ပါ။");
+        return;
+    }
+
+    let selectedTitles = titles.slice(startNum - 1, endNum);
+
     let loadingDiv = document.createElement('div');
     loadingDiv.id = "print-progress";
     loadingDiv.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.85); color:white; padding:20px 30px; border-radius:10px; z-index:999999; font-size:17px; text-align:center;";
-    loadingDiv.innerText = `PDF ထုတ်ရန် စုစည်းနေပါသည်...\n(၀ / ${titles.length})`;
+    loadingDiv.innerText = `PDF ထုတ်ရန် စုစည်းနေပါသည်...\n(၀ / ${selectedTitles.length})`;
     document.body.appendChild(loadingDiv);
 
-    let activeTitle = typeof currentActiveTitle !== 'undefined' && currentActiveTitle ? currentActiveTitle : "ပေါင်းချုပ်မှတ်တမ်း";
+    let baseTitle = typeof currentActiveTitle !== 'undefined' && currentActiveTitle ? currentActiveTitle : "ပေါင်းချုပ်မှတ်တမ်း";
+    let activeTitle = `${baseTitle} (အခန်း ${startNum} မှ ${endNum} အထိ)`;
 
-    /* 💡 ခေါင်းစဉ်နှင့် စာပိုဒ် မပြတ်စေရန် ပြင်ဆင်ထားသော CSS စနစ် */
     let htmlHeader = `
     <html>
     <head>
@@ -1248,19 +1328,31 @@ async function printCombinedPDF() {
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
             table, .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint { display: none !important; }
             
-            /* ခေါင်းစဉ် အရွယ်အစားနှင့် အလယ်ပို့ခြင်း */
-            h1 { font-size: 24pt !important; color: #000; text-align: center; margin-top: 40px; }
+            h1 { font-size: 24pt !important; color: #000; text-align: center; margin-top: 30px; }
             h2, h3, h4 { font-size: 20pt !important; color: #000; text-align: center; }
 
-            /* 💡 ခေါင်းစဉ်များပြီးလျှင် စာမျက်နှာ မခွဲစေရန် အဓိကတားမြစ်ချက် */
-            h1, h2, h3, h4, h5, h6 {
-                page-break-after: avoid !important;
-                break-after: avoid !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
+            /* မာတိကာ ဒီဇိုင်းနှင့် စာမျက်နှာနံပါတ် နေရာချမှု */
+            .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
+            .toc-list li { 
+                margin-bottom: 8px; 
+                font-size: 16pt; 
+                display: flex; 
+                align-items: baseline;
+            }
+            .toc-list li a { 
+                text-decoration: none; 
+                color: black; 
+            }
+            .toc-dots {
+                flex-grow: 1;
+                border-bottom: 1px dotted #555;
+                margin: 0 8px;
+            }
+            .toc-page-num { 
+                font-weight: bold; 
+                font-size: 15pt;
             }
 
-            /* စာပိုဒ်အရွယ်အစားများ */
             p, div, span, blockquote, dd, dt, li, small, center, .poem { 
                 font-size: 17pt !important; 
                 line-height: 1.8 !important; 
@@ -1270,29 +1362,15 @@ async function printCombinedPDF() {
             p { text-align: justify; text-indent: 40px; }
             .poem p, blockquote p, center p, blockquote { text-indent: 0 !important; text-align: left; }
             
-            /* 💡 ခေါင်းစဉ်နှင့် အောက်က စာပိုဒ်များကို တစ်စုတစ်စည်းတည်း တွဲပေးထားသည့် Block */
-            .chapter-block {
-                page-break-before: always !important;
-                break-before: page !important;
-            }
-
-            /* ခေါင်းစဉ်နှင့် ပထမစာပိုဒ် မကွဲထွက်အောင် ပေါင်းစည်းထားခြင်း */
-            .section-header-group {
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-            }
-
-            a { text-decoration: none; color: black; }
-            hr { border-top: 1px dashed #ccc; margin: 20px 0; }
+            .chapter-block { break-before: page; page-break-before: always; }
+            .section-header-group { break-inside: avoid; page-break-inside: avoid; }
             
             @page {
+                size: A4;
                 margin: 20mm 15mm 20mm 25mm;
-                margin-bottom: 2cm !important; 
                 @bottom-right {
-                    content: "[ " counter(page) " / " counter(pages) " ]" !important; 
-                    font-weight: bold !important; 
-                    font-size: 14pt !important; 
-                    color: #000 !important;
+                    content: "[ " counter(page) " / " counter(pages) " ]"; 
+                    font-weight: bold; font-size: 14pt; color: #000;
                 }
             }
         </style>
@@ -1301,13 +1379,13 @@ async function printCombinedPDF() {
         <h1>${activeTitle}</h1>
     `;
     
-    let tocHTML = `<h2>မာတိကာ</h2><ul style='line-height: 2; padding-left: 30px;'>`;
+    let tocHTML = `<h2>မာတိကာ</h2><ul class="toc-list">`;
     let contentHTML = "";
     let count = 0;
 
-    for (let title of titles) {
+    for (let title of selectedTitles) {
         count++;
-        document.getElementById('print-progress').innerText = `PDF ထုတ်ရန် စုစည်းနေပါသည်...\n(${count} / ${titles.length})`;
+        document.getElementById('print-progress').innerText = `စာမျက်နှာများ ရယူနေပါသည်...\n(${count} / ${selectedTitles.length})`;
 
         try {
             let api = `https://my.wikisource.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&origin=*&prop=text`;
@@ -1321,12 +1399,14 @@ async function printCombinedPDF() {
                 
                 doc.querySelectorAll('.mw-editsection, .navbox, .infobox, table, .ws-header, .headerContainer, .noprint').forEach(el => el.remove());
                 let cleanContent = doc.body.innerHTML;
-                let sectionId = "chapter_" + count;
+                
+                let currentChapterNum = startNum + count - 1; 
+                let sectionId = "chapter_" + currentChapterNum;
                 let displayTitle = title.replace(/_/g, ' ');
 
-                tocHTML += `<li><a href="#${sectionId}" style="border-bottom: 1px dotted #ccc;">${displayTitle}</a></li>`;
+                // မာတိကာတွင် စာမျက်နှာနံပါတ် ဖြည့်ရန် span tag ထည့်ထားပါသည်
+                tocHTML += `<li><a href="#${sectionId}">${displayTitle}</a><span class="toc-dots"></span><span class="toc-page-num" id="page_for_${sectionId}">-</span></li>`;
                 
-                /* 💡 ဤနေရာတွင် ခေါင်းစဉ်နှင့် စာအုပ်အခန်းများကို ဖွဲ့စည်းပုံ အသစ်ဖြင့် ထုပ်ပိုးထားပါသည် */
                 contentHTML += `
                 <div class="chapter-block">
                     <div class="section-header-group">
@@ -1342,11 +1422,18 @@ async function printCombinedPDF() {
 
     tocHTML += `</ul>`;
     let combinedHTML = htmlHeader + tocHTML + contentHTML + "</body></html>";
-    document.body.removeChild(document.getElementById('print-progress'));
+    
+    if (document.getElementById('print-progress')) {
+        document.body.removeChild(document.getElementById('print-progress'));
+    }
 
+    // iframe ကို Screen ပြင်ပ ရောက်အောင် ပို့သော်လည်း Height/Width ကို တိကျစွာ သတ်မှတ်ထားသည်
     let printFrame = document.createElement('iframe');
-    printFrame.style.position = "absolute";
-    printFrame.style.top = "-10000px"; 
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "100%";
+    printFrame.style.bottom = "100%";
+    printFrame.style.width = "794px"; // A4 Standard Width
+    printFrame.style.height = "1123px";
     document.body.appendChild(printFrame);
 
     let docContext = printFrame.contentWindow.document;
@@ -1355,11 +1442,42 @@ async function printCombinedPDF() {
     docContext.close();
 
     printFrame.onload = function() {
-        printFrame.contentWindow.focus();
-        printFrame.contentWindow.print();
-        setTimeout(() => { 
-            if(document.body.contains(printFrame)) document.body.removeChild(printFrame); 
-        }, 10000);
+        // စာမျက်နှာ အမြင့်နှင့် ခေါင်းစဉ်များ၏ တည်နေရာကို JavaScript ဖြင့် အလိုအလျောက် တွက်ချက်ခြင်း
+        setTimeout(() => {
+            try {
+                let win = printFrame.contentWindow;
+                let doc = win.document;
+                
+                // A4 စာမျက်နှာ တစ်မျက်နှာ၏ ပရင့်ထုတ်နိုင်သော အမြင့် pixel
+                let printablePageHeight = 980; 
+                let chapters = doc.querySelectorAll('.chapter-block');
+                
+                chapters.forEach(chap => {
+                    let h2 = chap.querySelector('h2');
+                    if (h2) {
+                        let id = h2.id;
+                        let topPos = h2.offsetTop;
+                        
+                        // အခန်းတစ်ခုစီ ရောက်ရှိနေသော စာမျက်နှာနံပါတ် တွက်ချက်ခြင်း
+                        let pageNum = Math.floor(topPos / printablePageHeight) + 1;
+                        let targetSpan = doc.getElementById('page_for_' + id);
+                        if (targetSpan) {
+                            targetSpan.innerText = pageNum;
+                        }
+                    }
+                });
+            } catch(e) {
+                console.error("Page calculation error: ", e);
+            }
+
+            // ပရင့်စတင် ထုတ်ပေးခြင်း
+            printFrame.contentWindow.focus();
+            printFrame.contentWindow.print();
+            
+            setTimeout(() => { 
+                if(document.body.contains(printFrame)) document.body.removeChild(printFrame); 
+            }, 5000);
+        }, 800);
     };
 }
 
