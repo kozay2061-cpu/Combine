@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>COMBINE PRINT</title>
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Nobox-shadowanmar:wght@400;700&display=swap');
 
     #reader-card {
         font-family: 'Noto Sans Myanmar', 'Pyidaungsu', sans-serif !important;
@@ -1326,12 +1326,17 @@ async function printCombinedPDF() {
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
-            table, .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint { display: none !important; }
+            table, .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint, #toc, .toc { display: none !important; }
             
             h1 { font-size: 24pt !important; color: #000; text-align: center; margin-top: 30px; }
-            h2, h3, h4 { font-size: 20pt !important; color: #000; text-align: center; }
+            h2, h3, h4 { font-size: 20pt !important; color: #000; text-align: center; margin-bottom: 8px !important; }
 
-            /* မာတိကာ ဒီဇိုင်းနှင့် စာမျက်နှာနံပါတ် နေရာချမှု */
+            /* 💡 ၁။ စာပိုဒ်ထဲက လင့်ခ် အရောင်ပြောင်းရန် (အမည်းရောင်ထားချင်ရင် color: black !important; ပြောင်းပါ) */
+            a { 
+                color: #b30000 !important; /* အနီရောင် (Dark Red) */
+                text-decoration: none !important; 
+            }
+
             .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
             .toc-list li { 
                 margin-bottom: 8px; 
@@ -1341,7 +1346,7 @@ async function printCombinedPDF() {
             }
             .toc-list li a { 
                 text-decoration: none; 
-                color: black; 
+                color: black !important; /* မာတိကာ လင့်ခ်ကို အမည်းရောင် ထားပေးထားသည် */
             }
             .toc-dots {
                 flex-grow: 1;
@@ -1351,6 +1356,7 @@ async function printCombinedPDF() {
             .toc-page-num { 
                 font-weight: bold; 
                 font-size: 15pt;
+                color: black !important;
             }
 
             p, div, span, blockquote, dd, dt, li, small, center, .poem { 
@@ -1359,11 +1365,16 @@ async function printCombinedPDF() {
                 color: #000000 !important; 
             }
             
-            p { text-align: justify; text-indent: 40px; }
+            p { text-align: justify; text-indent: 40px; margin-top: 4px !important; }
             .poem p, blockquote p, center p, blockquote { text-indent: 0 !important; text-align: left; }
             
             .chapter-block { break-before: page; page-break-before: always; }
-            .section-header-group { break-inside: avoid; page-break-inside: avoid; }
+            
+            /* 💡 ၂။ ခေါင်းစဉ်နှင့် အောက်က စာပိုဒ် မခွဲမထွက်စေရန် ထိန်းချုပ်သည့် CSS */
+            .header-with-first-p {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
             
             @page {
                 size: A4;
@@ -1397,19 +1408,31 @@ async function printCombinedPDF() {
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(htmlText, 'text/html');
                 
-                doc.querySelectorAll('.mw-editsection, .navbox, .infobox, table, .ws-header, .headerContainer, .noprint').forEach(el => el.remove());
+                doc.querySelectorAll('.mw-editsection, .navbox, .infobox, table, .ws-header, .headerContainer, .noprint, #toc, .toc').forEach(el => el.remove());
+
+                // 💡 🌟 ခေါင်းစဉ်နှင့် အောက်က ပထမဆုံး စာပိုဒ်ကို Div ဘောက်စ်တစ်ခုတည်းထဲ အတင်း တွဲထည့်သည့် Logic 🌟
+                let subHeadings = doc.body.querySelectorAll('h2, h3, h4, h5, h6');
+                subHeadings.forEach(h => {
+                    let nextEl = h.nextElementSibling;
+                    if (nextEl) {
+                        let wrapper = doc.createElement('div');
+                        wrapper.className = 'header-with-first-p';
+                        h.parentNode.insertBefore(wrapper, h);
+                        wrapper.appendChild(h);
+                        wrapper.appendChild(nextEl);
+                    }
+                });
+
                 let cleanContent = doc.body.innerHTML;
-                
                 let currentChapterNum = startNum + count - 1; 
                 let sectionId = "chapter_" + currentChapterNum;
                 let displayTitle = title.replace(/_/g, ' ');
 
-                // မာတိကာတွင် စာမျက်နှာနံပါတ် ဖြည့်ရန် span tag ထည့်ထားပါသည်
                 tocHTML += `<li><a href="#${sectionId}">${displayTitle}</a><span class="toc-dots"></span><span class="toc-page-num" id="page_for_${sectionId}">-</span></li>`;
                 
                 contentHTML += `
                 <div class="chapter-block">
-                    <div class="section-header-group">
+                    <div class="header-with-first-p">
                         <h2 id="${sectionId}">${displayTitle}</h2>
                     </div>
                     ${cleanContent}
@@ -1427,12 +1450,11 @@ async function printCombinedPDF() {
         document.body.removeChild(document.getElementById('print-progress'));
     }
 
-    // iframe ကို Screen ပြင်ပ ရောက်အောင် ပို့သော်လည်း Height/Width ကို တိကျစွာ သတ်မှတ်ထားသည်
     let printFrame = document.createElement('iframe');
     printFrame.style.position = "fixed";
     printFrame.style.right = "100%";
     printFrame.style.bottom = "100%";
-    printFrame.style.width = "794px"; // A4 Standard Width
+    printFrame.style.width = "794px";
     printFrame.style.height = "1123px";
     document.body.appendChild(printFrame);
 
@@ -1442,13 +1464,11 @@ async function printCombinedPDF() {
     docContext.close();
 
     printFrame.onload = function() {
-        // စာမျက်နှာ အမြင့်နှင့် ခေါင်းစဉ်များ၏ တည်နေရာကို JavaScript ဖြင့် အလိုအလျောက် တွက်ချက်ခြင်း
         setTimeout(() => {
             try {
                 let win = printFrame.contentWindow;
                 let doc = win.document;
                 
-                // A4 စာမျက်နှာ တစ်မျက်နှာ၏ ပရင့်ထုတ်နိုင်သော အမြင့် pixel
                 let printablePageHeight = 980; 
                 let chapters = doc.querySelectorAll('.chapter-block');
                 
@@ -1458,7 +1478,6 @@ async function printCombinedPDF() {
                         let id = h2.id;
                         let topPos = h2.offsetTop;
                         
-                        // အခန်းတစ်ခုစီ ရောက်ရှိနေသော စာမျက်နှာနံပါတ် တွက်ချက်ခြင်း
                         let pageNum = Math.floor(topPos / printablePageHeight) + 1;
                         let targetSpan = doc.getElementById('page_for_' + id);
                         if (targetSpan) {
@@ -1470,7 +1489,6 @@ async function printCombinedPDF() {
                 console.error("Page calculation error: ", e);
             }
 
-            // ပရင့်စတင် ထုတ်ပေးခြင်း
             printFrame.contentWindow.focus();
             printFrame.contentWindow.print();
             
@@ -1480,6 +1498,7 @@ async function printCombinedPDF() {
         }, 800);
     };
 }
+
 
 </script>
   
