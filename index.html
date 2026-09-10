@@ -1154,7 +1154,7 @@ function exportPDF() {
             .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
             .toc-list li { 
                 margin-bottom: 8px; 
-                font-size: 16pt; 
+                font-size: 20mm; 
                 display: flex; 
                 align-items: baseline;
             }
@@ -1178,7 +1178,7 @@ function exportPDF() {
             }
 
             p, div, span, li, center { 
-                font-size: 17pt !important; 
+                font-size: 18pt !important; 
                 line-height: 1.8 !important; 
                 color: #000 !important; 
                 orphans: 1; widows: 1; 
@@ -1195,8 +1195,8 @@ function exportPDF() {
             .page-break { page-break-before: always !important; break-before: page !important; }
             
             @page {
-                size: A4;
-                margin: 20mm 15mm 20mm 25mm;
+                size: Letter,A4;
+                margin: 17mm 12mm 17mm 22mm;
                 margin-bottom: 2cm !important; 
                 @bottom-right {
                     content: "[ " counter(page) " / " counter(pages) " ]" !important; 
@@ -1311,7 +1311,7 @@ async function printCombinedPDF() {
 
     let loadingDiv = document.createElement('div');
     loadingDiv.id = "print-progress";
-    loadingDiv.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.85); color:white; padding:20px 30px; border-radius:10px; z-index:999999; font-size:17px; text-align:center;";
+    loadingDiv.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.85); color:white; padding:20px 30px; border-radius:10px; z-index:999999; font-size:18px; text-align:center;";
     loadingDiv.innerText = `PDF ထုတ်ရန် စုစည်းနေပါသည်...\n(၀ / ${selectedTitles.length})`;
     document.body.appendChild(loadingDiv);
 
@@ -1340,7 +1340,7 @@ async function printCombinedPDF() {
             .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
             .toc-list li { 
                 margin-bottom: 8px; 
-                font-size: 16pt; 
+                font-size: 17pt; 
                 display: flex; 
                 align-items: baseline;
             }
@@ -1360,7 +1360,7 @@ async function printCombinedPDF() {
             }
 
             p, div, span, blockquote, dd, dt, li, small, center, .poem { 
-                font-size: 17pt !important; 
+                font-size: 18pt !important; 
                 line-height: 1.8 !important; 
                 color: #000000 !important; 
             }
