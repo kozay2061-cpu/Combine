@@ -1148,7 +1148,7 @@ function exportPDF() {
             @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
             
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
-            h1, h2, h3, h4 { color: #000; text-align: center; margin-bottom: 5px !important; }
+            h1, h2, h3, h4 { color: #000; text-align: center; margin-bottom: 15px !important; }
 
             /* မာတိကာ ဒီဇိုင်းနှင့် စာမျက်နှာနံပါတ် နေရာချမှု */
             .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
@@ -1183,7 +1183,7 @@ function exportPDF() {
                 color: #000 !important; 
                 orphans: 1; widows: 1; 
             }
-            p { text-align: justify; text-indent: 40px; margin-top: 5px !important; }
+            p { text-align: justify; text-indent: 0.5in; margin-top: 5px !important; }
             
             p, blockquote {
                 page-break-inside: auto !important;
@@ -1328,8 +1328,8 @@ async function printCombinedPDF() {
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
             table, .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint, #toc, .toc { display: none !important; }
             
-            h1 { font-size: 24pt !important; color: #000; text-align: center; margin-top: 30px; }
-            h2, h3, h4 { font-size: 20pt !important; color: #000; text-align: center; margin-bottom: 8px !important; }
+            h1 { font-size: 25pt !important; color: #000; text-align: center; margin-top: 30px; line-height: 1.8 ; }
+            h2, h3, h4 { font-size: 20pt !important; color: #000; text-align: center; margin-bottom: 15px !important; }
 
             /* 💡 ၁။ စာပိုဒ်ထဲက လင့်ခ် အရောင်ပြောင်းရန် (အမည်းရောင်ထားချင်ရင် color: black !important; ပြောင်းပါ) */
             a { 
@@ -1365,7 +1365,7 @@ async function printCombinedPDF() {
                 color: #000000 !important; 
             }
             
-            p { text-align: justify; text-indent: 40px; margin-top: 4px !important; }
+            p { text-align: justify; text-indent: 0.5in; margin-top: 4px !important; }
             .poem p, blockquote p, center p, blockquote { text-indent: 0 !important; text-align: left; }
             
             .chapter-block { break-before: page; page-break-before: always; }
