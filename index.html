@@ -245,7 +245,7 @@ h1, h2, h3, h4, h5, h6, [id] { scroll-margin-top: 120px; }
     }
 
     /* ၂။ ပရင့်ထုတ်လျှင် မလိုလားအပ်သော Element များကို ဖျောက်ခြင်း */
-    .top-bar, #sidebar, #overlay, .modal, .hide-on-print, .toc, #toc, .mw-toc, 
+    .top-bar, #sidebar, #overlay, .modal, .hide-on-print,
     .toolbar, .top-header, button, input, audio, iframe, header, .header, 
     nav, .menu, .sharedaddy {
         display: none !important;
@@ -1106,12 +1106,11 @@ function exportPDF() {
     let tempDiv = document.createElement('div');
     tempDiv.innerHTML = contentBox.innerHTML;
 
-    tempDiv.querySelectorAll('.mw-editsection, .navbox, .infobox, table, .ws-header, .headerContainer, .noprint, #toc').forEach(el => el.remove());
+    tempDiv.querySelectorAll('.mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint, #toc').forEach(el => el.remove());
 
     let tocHTML = "";
     let headings = tempDiv.querySelectorAll('h2, h3');
     
-    // မာတိကာ တည်ဆောက်ခြင်းနှင့် စာမျက်နှာနံပါတ် သတ်မှတ်ရန် ID/Span ထည့်ခြင်း
     if (headings.length > 0) {
         tocHTML = `<h2>မာတိကာ</h2><ul class="toc-list">`;
         headings.forEach((heading, index) => {
@@ -1125,12 +1124,14 @@ function exportPDF() {
         tocHTML += `</ul>`;
     }
 
+    // 💡 ခေါင်းစဉ်နှင့် စာပိုဒ်ကို တစ်မျက်နှာတည်းတွင် ရှိစေရန် အသေအချာ ထုပ်ပိုးခြင်း
     let allHeadings = tempDiv.querySelectorAll('h2, h3, h4, h5, h6');
     allHeadings.forEach(heading => {
         let nextSibling = heading.nextElementSibling;
-        if (nextSibling && (nextSibling.tagName === 'P' || nextSibling.tagName === 'DIV' || nextSibling.tagName === 'UL')) {
+        if (nextSibling && !/^H[1-6]$/.test(nextSibling.tagName)) {
             let wrapper = document.createElement('div');
-            wrapper.setAttribute('style', 'page-break-inside: avoid !important; break-inside: avoid !important; margin-bottom: 10px;');
+            // display: inline-block နှင့် width: 100% ကို သုံးမှသာ Browser က စာမျက်နှာဖြတ်ခြင်းကို တားဆီးပေးမည်
+            wrapper.setAttribute('style', 'page-break-inside: avoid !important; break-inside: avoid !important; display: inline-block; width: 100%; margin-bottom: 10px;');
             heading.parentNode.insertBefore(wrapper, heading);
             wrapper.appendChild(heading);
             wrapper.appendChild(nextSibling);
@@ -1146,58 +1147,27 @@ function exportPDF() {
         <title>${activeTitle}</title>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
-            
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
-            h1, h2, h3, h4 { color: #000; text-align: center; margin-bottom: 15px !important; }
-
-            /* မာတိကာ ဒီဇိုင်းနှင့် စာမျက်နှာနံပါတ် နေရာချမှု */
+            h1, h2, h3, h4 { color: #000; text-align: center; margin-bottom: 15px !important; page-break-after: avoid !important; break-after: avoid !important; }
             .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
-            .toc-list li { 
-                margin-bottom: 8px; 
-                font-size: 20mm; 
-                display: flex; 
-                align-items: baseline;
-            }
-            .toc-list li a { 
-                text-decoration: none; 
-                color: black; 
-            }
-            .toc-dots {
-                flex-grow: 1;
-                border-bottom: 1px dotted #555;
-                margin: 0 8px;
-            }
-            .toc-page-num { 
-                font-weight: bold; 
-                font-size: 15pt;
-            }
-
-            h1 + *, h2 + *, h3 + *, h4 + * {
-                page-break-before: avoid !important;
-                break-before: avoid !important;
-            }
-
-            p, div, span, li, center { 
-                font-size: 18pt !important; 
-                line-height: 1.8 !important; 
-                color: #000 !important; 
-                orphans: 1; widows: 1; 
-            }
+            .toc-list li { margin-bottom: 8px; font-size: 17pt; display: flex; align-items: baseline; }
+            .toc-list li a { text-decoration: none; color: black; }
+            .toc-dots { flex-grow: 1; border-bottom: 1px dotted #555; margin: 0 8px; }
+            .toc-page-num { font-weight: bold; font-size: 15pt; }
+            p, div, span, li, center { font-size: 18pt !important; line-height: 1.8 !important; color: #000 !important; orphans: 1; widows: 1; }
             p { text-align: justify; text-indent: 0.5in; margin-top: 5px !important; }
             
-            p, blockquote {
-                page-break-inside: auto !important;
-                break-inside: auto !important;
-            }
-
-            a { text-decoration: none; color: black; }
+            #main-content { break-before: page; page-break-before: always; display: flow-root; }
             
-            .page-break { page-break-before: always !important; break-before: page !important; }
+            /* ဇယား (Table) မျဉ်းများ */
+            table { border-collapse: collapse !important; width: 100% !important; margin: 15px 0 !important; }
+            table, th, td { border: 1pt solid black !important; }
+            th, td { padding: 8px !important; text-align: left !important; }
+            th { background-color: #f2f2f2 !important; }
             
             @page {
-                size: Letter,A4;
-                margin: 17mm 12mm 17mm 22mm;
-                margin-bottom: 2cm !important; 
+                size: A4, Letter;
+                margin: 17mm 12mm 20mm 22mm;
                 @bottom-right {
                     content: "[ " counter(page) " / " counter(pages) " ]" !important; 
                     font-weight: bold !important; font-size: 14pt !important; color: #000 !important;
@@ -1206,23 +1176,24 @@ function exportPDF() {
         </style>
     </head>
     <body>
-        <h1 style="margin-top: 20px;">${activeTitle}</h1>
-        ${tocHTML}
-        
-        ${tocHTML !== "" ? '<div class="page-break"></div>' : ''}
-        
-        ${cleanContent}
+        <div id="toc-section" style="display: flow-root;">
+            <h1 style="margin-top: 20px;">${activeTitle}</h1>
+            ${tocHTML}
+        </div>
+        <div id="main-content">
+            ${cleanContent}
+        </div>
     </body>
     </html>
     `;
 
-    // offsetTop တွက်ချက်နိုင်ရန် iframe အရွယ်အစား သတ်မှတ်ပေးခြင်း
     let printFrame = document.createElement('iframe');
     printFrame.style.position = "fixed";
     printFrame.style.right = "100%";
     printFrame.style.bottom = "100%";
-    printFrame.style.width = "794px"; 
-    printFrame.style.height = "1123px";
+    printFrame.style.width = "176mm"; 
+    printFrame.style.height = "260mm"; 
+    printFrame.style.border = "none";
     document.body.appendChild(printFrame);
 
     let docContext = printFrame.contentWindow.document;
@@ -1231,35 +1202,60 @@ function exportPDF() {
     docContext.close();
 
     printFrame.onload = function() {
-        // စာမျက်နှာ အမြင့်နှင့် ခေါင်းစဉ်များ၏ တည်နေရာကို တွက်ချက်ခြင်း
-        setTimeout(() => {
-            try {
-                let win = printFrame.contentWindow;
-                let doc = win.document;
-                let printablePageHeight = 980; 
-                
-                let targetHeadings = doc.querySelectorAll('h2[id], h3[id]');
-                targetHeadings.forEach(h => {
-                    let targetSpan = doc.getElementById('page_for_' + h.id);
-                    if (targetSpan) {
-                        let topPos = h.offsetTop;
-                        let pageNum = Math.floor(topPos / printablePageHeight) + 1;
-                        targetSpan.innerText = pageNum;
-                    }
-                });
-            } catch(e) {
-                console.error("Page calculation error: ", e);
-            }
+        let win = printFrame.contentWindow;
+        win.document.fonts.ready.then(() => {
+            setTimeout(() => {
+                try {
+                    let doc = win.document;
+                    let body = doc.body;
 
-            printFrame.contentWindow.focus();
-            printFrame.contentWindow.print();
-            
-            setTimeout(() => { 
-                if(document.body.contains(printFrame)) {
-                    document.body.removeChild(printFrame); 
+                    let wrapper = doc.createElement('div');
+                    wrapper.style.cssText = "height: 260mm; width: 176mm; column-width: 176mm; column-gap: 0; column-fill: auto; position: absolute; top: 0; left: 0;";
+                    
+                    while (body.firstChild) {
+                        wrapper.appendChild(body.firstChild);
+                    }
+                    body.appendChild(wrapper);
+
+                    let mainContent = doc.getElementById('main-content');
+                    if (mainContent) {
+                        mainContent.style.setProperty('break-before', 'column', 'important');
+                    }
+
+                    let colWidth = wrapper.getBoundingClientRect().width; 
+                    let targetHeadings = doc.querySelectorAll('h2[id], h3[id]');
+                    
+                    targetHeadings.forEach(h => {
+                        let targetSpan = doc.getElementById('page_for_' + h.id);
+                        if (targetSpan) {
+                            let hRect = h.getBoundingClientRect();
+                            let wrapperRect = wrapper.getBoundingClientRect();
+                            let relativeLeft = hRect.left - wrapperRect.left;
+                            let pageNum = 1 + Math.floor((relativeLeft + (colWidth / 2)) / colWidth);
+                            targetSpan.innerText = pageNum;
+                        }
+                    });
+
+                    if (mainContent) {
+                        mainContent.style.removeProperty('break-before');
+                    }
+                    while (wrapper.firstChild) {
+                        body.appendChild(wrapper.firstChild);
+                    }
+                    body.removeChild(wrapper);
+
+                } catch(e) {
+                    console.error("Page calculation error: ", e);
                 }
-            }, 5000);
-        }, 800);
+
+                win.focus();
+                win.print();
+                
+                setTimeout(() => { 
+                    if(document.body.contains(printFrame)) document.body.removeChild(printFrame); 
+                }, 5000);
+            }, 800); 
+        });
     };
 }
 
@@ -1267,9 +1263,6 @@ function startPrint() {
     exportPDF();
 }
 
-// ==========================================
-// ၂။ ပေါင်းပြီးပရင့်ထုတ်သည့် လုပ်ဆောင်ချက် (Combine Print)
-// ==========================================
 async function printCombinedPDF() {
     const contentBox = document.getElementById('content');
     if (!contentBox) return;
@@ -1298,7 +1291,7 @@ async function printCombinedPDF() {
     let startNum = parseInt(startNumStr);
 
     let defaultEnd = Math.min(startNum + 19, totalChapters); 
-    let endNumStr = prompt(`မည်သည့်အခန်းအထိ ထုတ်မည်နည်း။ (ဥပမာ - ${defaultEnd})\n(မှတ်ချက်။ တစ်ခါထုတ်လျှင် အခန်း ၂၀ မှ ၂၅ ခန်းခန့်သာ အကောင်းဆုံးဖြစ်ပါသည်)`, defaultEnd);
+    let endNumStr = prompt(`မည်သည့်အခန်းအထိ ထုတ်မည်နည်း။ (ဥပမာ - ${defaultEnd})`, defaultEnd);
     if (endNumStr === null) return;
     let endNum = parseInt(endNumStr);
 
@@ -1326,68 +1319,69 @@ async function printCombinedPDF() {
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;700&display=swap');
             body { font-family: 'Pyidaungsu', 'Noto Sans Myanmar', sans-serif; background: white; color: black; padding: 0; margin: 0; }
-            table, .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint, #toc, .toc { display: none !important; }
-            
+            .mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint, #toc, .toc { display: none !important; }
             h1 { font-size: 25pt !important; color: #000; text-align: center; margin-top: 30px; line-height: 1.8 ; }
             h2, h3, h4 { font-size: 20pt !important; color: #000; text-align: center; margin-bottom: 15px !important; }
-
-            /* 💡 ၁။ စာပိုဒ်ထဲက လင့်ခ် အရောင်ပြောင်းရန် (အမည်းရောင်ထားချင်ရင် color: black !important; ပြောင်းပါ) */
-            a { 
-                color: #b30000 !important; /* အနီရောင် (Dark Red) */
-                text-decoration: none !important; 
-            }
-
+            a { color: #b30000 !important; text-decoration: none !important; }
             .toc-list { list-style: none; padding-left: 0; margin: 20px 0; }
-            .toc-list li { 
-                margin-bottom: 8px; 
-                font-size: 17pt; 
-                display: flex; 
-                align-items: baseline;
-            }
-            .toc-list li a { 
-                text-decoration: none; 
-                color: black !important; /* မာတိကာ လင့်ခ်ကို အမည်းရောင် ထားပေးထားသည် */
-            }
-            .toc-dots {
-                flex-grow: 1;
-                border-bottom: 1px dotted #555;
-                margin: 0 8px;
-            }
-            .toc-page-num { 
-                font-weight: bold; 
-                font-size: 15pt;
-                color: black !important;
-            }
-
-            p, div, span, blockquote, dd, dt, li, small, center, .poem { 
-                font-size: 18pt !important; 
-                line-height: 1.8 !important; 
-                color: #000000 !important; 
-            }
-            
+            .toc-list li { margin-bottom: 8px; font-size: 17pt; display: flex; align-items: baseline; }
+            .toc-list li a { text-decoration: none; color: black !important; }
+            .toc-dots { flex-grow: 1; border-bottom: 1px dotted #555; margin: 0 8px; }
+            .toc-page-num { font-weight: bold; font-size: 15pt; color: black !important; }
+            p, div, span, blockquote, dd, dt, li, small, center, .poem { font-size: 18pt !important; line-height: 1.8 !important; color: #000000 !important; }
             p { text-align: justify; text-indent: 0.5in; margin-top: 4px !important; }
             .poem p, blockquote p, center p, blockquote { text-indent: 0 !important; text-align: left; }
             
-            .chapter-block { break-before: page; page-break-before: always; }
+            .chapter-block { break-before: page; page-break-before: always; display: flow-root; }
             
-            /* 💡 ၂။ ခေါင်းစဉ်နှင့် အောက်က စာပိုဒ် မခွဲမထွက်စေရန် ထိန်းချုပ်သည့် CSS */
-            .header-with-first-p {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
+            /* 💡 ခေါင်းစဉ်နှင့် စာပိုဒ် တဆက်တည်းဖြစ်စေရန် ဤအပိုင်း အဓိကပါ */
+            .header-with-first-p { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important; 
+                display: inline-block !important; /* Browser အားလုံးတွင် အလုပ်လုပ်စေရန် */
+                width: 100% !important; 
             }
+
+            table p, th p, td p, th, td, .center p, .poem p, blockquote p { text-indent: 0 !important; }
+            a { text-decoration: none !important; color: black !important; }
+
+            h1, h2, h3, h4, h5, h6 {
+                color: #000000 !important;
+                text-align: center !important;
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            p, li, div, dd, dt, blockquote { 
+                page-break-inside: auto !important; 
+                break-inside: auto !important; }
+
+            img, table { 
+                page-break-inside: avoid !important; 
+                break-inside: avoid !important;  }
+                
+            /* ဇယား (Table) မျဉ်းများ */
+            table { border-collapse: collapse !important; width: 100% !important; margin: 15px 0 !important; }
+            table, th, td { border: 1pt solid black !important; }
+            th, td { padding: 8px !important; text-align: left !important; }
+            th { background-color: #f2f2f2 !important; }
+
+            .page-break { 
+                page-break-before: always !important; 
+                break-before: page !important;  }
             
             @page {
-                size: A4;
+                size: A4, Letter;
                 margin: 20mm 15mm 20mm 25mm;
-                @bottom-right {
-                    content: "[ " counter(page) " / " counter(pages) " ]"; 
-                    font-weight: bold; font-size: 14pt; color: #000;
-                }
+                @bottom-right { content: "[ " counter(page) " / " counter(pages) " ]"; font-weight: bold; font-size: 14pt; color: #000; }
             }
         </style>
     </head>
     <body>
-        <h1>${activeTitle}</h1>
+        <div id="toc-section" style="display: flow-root;">
+            <h1>${activeTitle}</h1>
     `;
     
     let tocHTML = `<h2>မာတိကာ</h2><ul class="toc-list">`;
@@ -1408,13 +1402,12 @@ async function printCombinedPDF() {
                 let parser = new DOMParser();
                 let doc = parser.parseFromString(htmlText, 'text/html');
                 
-                doc.querySelectorAll('.mw-editsection, .navbox, .infobox, table, .ws-header, .headerContainer, .noprint, #toc, .toc').forEach(el => el.remove());
+                doc.querySelectorAll('.mw-editsection, .navbox, .infobox, .ws-header, .headerContainer, .noprint, #toc, .toc').forEach(el => el.remove());
 
-                // 💡 🌟 ခေါင်းစဉ်နှင့် အောက်က ပထမဆုံး စာပိုဒ်ကို Div ဘောက်စ်တစ်ခုတည်းထဲ အတင်း တွဲထည့်သည့် Logic 🌟
                 let subHeadings = doc.body.querySelectorAll('h2, h3, h4, h5, h6');
                 subHeadings.forEach(h => {
                     let nextEl = h.nextElementSibling;
-                    if (nextEl) {
+                    if (nextEl && !/^H[1-6]$/.test(nextEl.tagName)) {
                         let wrapper = doc.createElement('div');
                         wrapper.className = 'header-with-first-p';
                         h.parentNode.insertBefore(wrapper, h);
@@ -1431,7 +1424,7 @@ async function printCombinedPDF() {
                 tocHTML += `<li><a href="#${sectionId}">${displayTitle}</a><span class="toc-dots"></span><span class="toc-page-num" id="page_for_${sectionId}">-</span></li>`;
                 
                 contentHTML += `
-                <div class="chapter-block">
+                <div class="chapter-block" id="${sectionId}_block">
                     <div class="header-with-first-p">
                         <h2 id="${sectionId}">${displayTitle}</h2>
                     </div>
@@ -1443,7 +1436,7 @@ async function printCombinedPDF() {
         }
     }
 
-    tocHTML += `</ul>`;
+    tocHTML += `</ul></div>`;
     let combinedHTML = htmlHeader + tocHTML + contentHTML + "</body></html>";
     
     if (document.getElementById('print-progress')) {
@@ -1454,8 +1447,10 @@ async function printCombinedPDF() {
     printFrame.style.position = "fixed";
     printFrame.style.right = "100%";
     printFrame.style.bottom = "100%";
-    printFrame.style.width = "794px";
-    printFrame.style.height = "1123px";
+    
+    printFrame.style.width = "170mm"; 
+    printFrame.style.height = "257mm"; 
+    printFrame.style.border = "none";
     document.body.appendChild(printFrame);
 
     let docContext = printFrame.contentWindow.document;
@@ -1464,41 +1459,73 @@ async function printCombinedPDF() {
     docContext.close();
 
     printFrame.onload = function() {
-        setTimeout(() => {
-            try {
-                let win = printFrame.contentWindow;
-                let doc = win.document;
-                
-                let printablePageHeight = 980; 
-                let chapters = doc.querySelectorAll('.chapter-block');
-                
-                chapters.forEach(chap => {
-                    let h2 = chap.querySelector('h2');
-                    if (h2) {
-                        let id = h2.id;
-                        let topPos = h2.offsetTop;
-                        
-                        let pageNum = Math.floor(topPos / printablePageHeight) + 1;
-                        let targetSpan = doc.getElementById('page_for_' + id);
-                        if (targetSpan) {
-                            targetSpan.innerText = pageNum;
-                        }
-                    }
-                });
-            } catch(e) {
-                console.error("Page calculation error: ", e);
-            }
+        let win = printFrame.contentWindow;
+        win.document.fonts.ready.then(() => {
+            setTimeout(() => {
+                try {
+                    let doc = win.document;
+                    let body = doc.body;
 
-            printFrame.contentWindow.focus();
-            printFrame.contentWindow.print();
-            
-            setTimeout(() => { 
-                if(document.body.contains(printFrame)) document.body.removeChild(printFrame); 
-            }, 5000);
-        }, 800);
+                    let wrapper = doc.createElement('div');
+                    wrapper.style.cssText = "height: 257mm; width: 170mm; column-width: 170mm; column-gap: 0; column-fill: auto; position: absolute; top: 0; left: 0;";
+                    
+                    while (body.firstChild) {
+                        wrapper.appendChild(body.firstChild);
+                    }
+                    body.appendChild(wrapper);
+
+                    let tocSection = doc.getElementById('toc-section');
+                    let wrapperRect = wrapper.getBoundingClientRect();
+                    let colWidth = wrapperRect.width;
+
+                    let tocPages = 1;
+                    if (tocSection) {
+                        let tocRect = tocSection.getBoundingClientRect();
+                        tocPages = Math.max(1, Math.floor(((tocRect.right - wrapperRect.left) + (colWidth / 2)) / colWidth));
+                    }
+                    
+                    let contentStartPage = 1 + tocPages;
+
+                    let chapters = doc.querySelectorAll('.chapter-block');
+                    chapters.forEach(chap => {
+                        let h2 = chap.querySelector('h2');
+                        if (h2) {
+                            let id = h2.id;
+                            let titleText = h2.innerText.trim();
+                            let targetSpan = doc.getElementById('page_for_' + id);
+                            
+                            if (titleText && titleText.length > 0) {
+                                let hRect = h2.getBoundingClientRect();
+                                let relativeLeft = hRect.left - wrapperRect.left;
+                                let pageNum = contentStartPage + Math.floor((relativeLeft + (colWidth / 2)) / colWidth);
+                                
+                                if (targetSpan) targetSpan.innerText = pageNum;
+                            } else {
+                                let parentLi = targetSpan ? targetSpan.closest('li') : null;
+                                if (parentLi) parentLi.style.display = 'none';
+                            }
+                        }
+                    });
+
+                    while (wrapper.firstChild) {
+                        body.appendChild(wrapper.firstChild);
+                    }
+                    body.removeChild(wrapper);
+
+                } catch(e) {
+                    console.error("Page calculation error: ", e);
+                }
+
+                win.focus();
+                win.print();
+                
+                setTimeout(() => { 
+                    if(document.body.contains(printFrame)) document.body.removeChild(printFrame); 
+                }, 5000);
+            }, 800);
+        });
     };
 }
-
 
 </script>
   
